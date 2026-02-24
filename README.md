@@ -43,6 +43,20 @@ zig build ios -Dios_sdk=/absolute/path/to/iPhoneOS.sdk
 
 Output: static library in `zig-out/lib/` for linking into an iOS app target.
 
+### Xcode iOS host app
+
+An Xcode host project is included at:
+
+`ios/VoxelEditorHost/VoxelEditorHost.xcodeproj`
+
+It contains a pre-build script that runs:
+
+```bash
+zig build ios -Dios_sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+```
+
+so the app links `zig-out/lib/libvoxel_editor_ios.a` automatically during Xcode builds.
+
 ## Controls
 
 - Drag with mouse/finger: orbit camera
