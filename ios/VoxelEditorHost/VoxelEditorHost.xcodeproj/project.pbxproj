@@ -95,6 +95,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		1DAC87A0F3858857C62BDC9E /* Build Zig iOS Library */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -109,7 +110,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\ncd \"$SRCROOT/../..\"\nIOS_SDK=\"$(xcrun --sdk iphoneos --show-sdk-path)\"\nzig build ios -Dios_sdk=\"$IOS_SDK\"\n";
+			shellScript = "set -euo pipefail\ncd \"$SRCROOT/../..\"\nif command -v zig >/dev/null 2>&1; then\n  ZIG_BIN=\"$(command -v zig)\"\nelif [ -x /opt/homebrew/bin/zig ]; then\n  ZIG_BIN=/opt/homebrew/bin/zig\nelif [ -x /usr/local/bin/zig ]; then\n  ZIG_BIN=/usr/local/bin/zig\nelse\n  echo \"error: zig not found. Install Zig or add it to PATH for Xcode build scripts.\"\n  exit 1\nfi\nIOS_SDK=\"$(xcrun --sdk iphoneos --show-sdk-path)\"\n\"$ZIG_BIN\" build ios -Dios_sdk=\"$IOS_SDK\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

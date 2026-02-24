@@ -29,11 +29,22 @@ targets:
           - "-lvoxel_editor_ios"
     preBuildScripts:
       - name: Build Zig iOS Library
+        basedOnDependencyAnalysis: false
         script: |
           set -euo pipefail
           cd "$SRCROOT/../.."
+          if command -v zig >/dev/null 2>&1; then
+            ZIG_BIN="$(command -v zig)"
+          elif [ -x /opt/homebrew/bin/zig ]; then
+            ZIG_BIN=/opt/homebrew/bin/zig
+          elif [ -x /usr/local/bin/zig ]; then
+            ZIG_BIN=/usr/local/bin/zig
+          else
+            echo "error: zig not found. Install Zig or add it to PATH for Xcode build scripts."
+            exit 1
+          fi
           IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
-          zig build ios -Dios_sdk="$IOS_SDK"
+          "$ZIG_BIN" build ios -Dios_sdk="$IOS_SDK"
 schemes:
   VoxelEditorHost:
     build:
