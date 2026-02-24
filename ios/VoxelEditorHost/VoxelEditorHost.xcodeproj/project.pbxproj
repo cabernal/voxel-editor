@@ -7,30 +7,73 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		494613FC392F19F2957F7A5C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827F00E391838BF7C02330B /* ContentView.swift */; };
-		60D5C9F2C2624498014558C8 /* VoxelEditorHostApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65D67C8E7C5550A5F5EFE08 /* VoxelEditorHostApp.swift */; };
+		2BECCD5D5EA30696085E40C6 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 411266EC4B25B6A0E8C4DA9F /* AVFoundation.framework */; };
+		332D37D94796AFFF4426CC54 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35DB6DCE125BC4776E22A7AF /* QuartzCore.framework */; };
+		3BDCC9517AC0B0007E434351 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB831A949391BB78BD3024B1 /* Foundation.framework */; };
+		4CA24ECC3910DCF70C2348D2 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 866EA3D6D46FA7D451906400 /* AudioToolbox.framework */; };
+		67D07728E21A44B582DACECD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B6A7FAB55DD364DA76D161D5 /* main.m */; };
+		8F1A56B95DB02D0BD6A61E0B /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC1C8D25F21425E7629AE1F1 /* UIKit.framework */; };
+		B9AD37BE12AD2DC4170C79CB /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6CEE2737DD9A53226249AE2C /* Metal.framework */; };
+		C7B5030BB3E248C4B0148267 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B969D4D0EA347FEA3E4E1D9A /* MetalKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		35DB6DCE125BC4776E22A7AF /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		411266EC4B25B6A0E8C4DA9F /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		4FECF5843D94BAE23E49D703 /* VoxelEditorHost.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoxelEditorHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C827F00E391838BF7C02330B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		E65D67C8E7C5550A5F5EFE08 /* VoxelEditorHostApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoxelEditorHostApp.swift; sourceTree = "<group>"; };
+		6CEE2737DD9A53226249AE2C /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		866EA3D6D46FA7D451906400 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		AB831A949391BB78BD3024B1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		AC1C8D25F21425E7629AE1F1 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		B6A7FAB55DD364DA76D161D5 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		B969D4D0EA347FEA3E4E1D9A /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F26768A9ED631FBBF6E22F74 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3BDCC9517AC0B0007E434351 /* Foundation.framework in Frameworks */,
+				8F1A56B95DB02D0BD6A61E0B /* UIKit.framework in Frameworks */,
+				B9AD37BE12AD2DC4170C79CB /* Metal.framework in Frameworks */,
+				C7B5030BB3E248C4B0148267 /* MetalKit.framework in Frameworks */,
+				332D37D94796AFFF4426CC54 /* QuartzCore.framework in Frameworks */,
+				4CA24ECC3910DCF70C2348D2 /* AudioToolbox.framework in Frameworks */,
+				2BECCD5D5EA30696085E40C6 /* AVFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		200283A23A3D78F49105E4C6 = {
 			isa = PBXGroup;
 			children = (
 				7A84A0DD1DC65CAF3AD53062 /* Sources */,
+				5242963C88B951D62DD36B38 /* Frameworks */,
 				F0AA5D59E9B7F3FC062A8D05 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		5242963C88B951D62DD36B38 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				866EA3D6D46FA7D451906400 /* AudioToolbox.framework */,
+				411266EC4B25B6A0E8C4DA9F /* AVFoundation.framework */,
+				AB831A949391BB78BD3024B1 /* Foundation.framework */,
+				6CEE2737DD9A53226249AE2C /* Metal.framework */,
+				B969D4D0EA347FEA3E4E1D9A /* MetalKit.framework */,
+				35DB6DCE125BC4776E22A7AF /* QuartzCore.framework */,
+				AC1C8D25F21425E7629AE1F1 /* UIKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		7A84A0DD1DC65CAF3AD53062 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				C827F00E391838BF7C02330B /* ContentView.swift */,
-				E65D67C8E7C5550A5F5EFE08 /* VoxelEditorHostApp.swift */,
+				B6A7FAB55DD364DA76D161D5 /* main.m */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -52,6 +95,7 @@
 			buildPhases = (
 				1DAC87A0F3858857C62BDC9E /* Build Zig iOS Library */,
 				1D238D388A843814F2C9F77F /* Sources */,
+				F26768A9ED631FBBF6E22F74 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -95,22 +139,29 @@
 /* Begin PBXShellScriptBuildPhase section */
 		1DAC87A0F3858857C62BDC9E /* Build Zig iOS Library */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/../../build.zig",
+				"$(SRCROOT)/../../build.zig.zon",
+				"$(SRCROOT)/../../src",
+				"$(SRCROOT)/../../third_party/sokol",
+				"$(SRCROOT)/../../third_party/cimgui",
+				"$(SRCROOT)/../../third_party/ios_shims",
 			);
 			name = "Build Zig iOS Library";
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/zig-libs/$(PLATFORM_NAME)-$(NATIVE_ARCH_ACTUAL)/libvoxel_editor_ios.a",
+				"$(DERIVED_FILE_DIR)/zig-libs/$(PLATFORM_NAME)-$(NATIVE_ARCH_ACTUAL)/libsokol_clib_ios.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\ncd \"$SRCROOT/../..\"\nif command -v zig >/dev/null 2>&1; then\n  ZIG_BIN=\"$(command -v zig)\"\nelif [ -x /opt/homebrew/bin/zig ]; then\n  ZIG_BIN=/opt/homebrew/bin/zig\nelif [ -x /usr/local/bin/zig ]; then\n  ZIG_BIN=/usr/local/bin/zig\nelse\n  echo \"error: zig not found. Install Zig or add it to PATH for Xcode build scripts.\"\n  exit 1\nfi\nIOS_SDK=\"$(xcrun --sdk iphoneos --show-sdk-path)\"\n\"$ZIG_BIN\" build ios -Dios_sdk=\"$IOS_SDK\"\n";
+			shellScript = "set -euo pipefail\ncd \"$SRCROOT/../..\"\nif command -v zig >/dev/null 2>&1; then\n  ZIG_BIN=\"$(command -v zig)\"\nelif [ -x /opt/homebrew/bin/zig ]; then\n  ZIG_BIN=/opt/homebrew/bin/zig\nelif [ -x /usr/local/bin/zig ]; then\n  ZIG_BIN=/usr/local/bin/zig\nelse\n  echo \"error: zig not found. Install Zig or add it to PATH for Xcode build scripts.\"\n  exit 1\nfi\ncase \"${NATIVE_ARCH_ACTUAL:-arm64}\" in\n  arm64) IOS_ARCH=aarch64 ;;\n  x86_64) IOS_ARCH=x86_64 ;;\n  *)\n    echo \"error: unsupported iOS arch '${NATIVE_ARCH_ACTUAL:-unknown}'\"\n    exit 1\n    ;;\nesac\nif [ \"${PLATFORM_NAME:-iphoneos}\" = \"iphonesimulator\" ]; then\n  IOS_SDK=\"$(xcrun --sdk iphonesimulator --show-sdk-path)\"\n  IOS_SIM=true\nelse\n  IOS_SDK=\"$(xcrun --sdk iphoneos --show-sdk-path)\"\n  IOS_SIM=false\nfi\n\"$ZIG_BIN\" build ios -Dios_sdk=\"$IOS_SDK\" -Dios_simulator=\"$IOS_SIM\" -Dios_arch=\"$IOS_ARCH\"\nOUT_DIR=\"$DERIVED_FILE_DIR/zig-libs/$PLATFORM_NAME-$NATIVE_ARCH_ACTUAL\"\nmkdir -p \"$OUT_DIR\"\ncp -f \"zig-out/lib/libvoxel_editor_ios.a\" \"$OUT_DIR/libvoxel_editor_ios.a\"\ncp -f \"zig-out/lib/libsokol_clib_ios.a\" \"$OUT_DIR/libsokol_clib_ios.a\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -119,8 +170,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				494613FC392F19F2957F7A5C /* ContentView.swift in Sources */,
-				60D5C9F2C2624498014558C8 /* VoxelEditorHostApp.swift in Sources */,
+				67D07728E21A44B582DACECD /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -188,8 +238,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = NO;
+				CLANG_MODULES_AUTOLINK = NO;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -198,11 +250,14 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(DERIVED_FILE_DIR)/zig-libs/$(PLATFORM_NAME)-$(NATIVE_ARCH_ACTUAL)",
 					"$(SRCROOT)/../../zig-out/lib",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lvoxel_editor_ios",
+					"-lsokol_clib_ios",
+					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.cabernal.voxeleditorhost;
 				PRODUCT_NAME = VoxelEditorHost;
@@ -215,8 +270,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = NO;
+				CLANG_MODULES_AUTOLINK = NO;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -225,11 +282,14 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(DERIVED_FILE_DIR)/zig-libs/$(PLATFORM_NAME)-$(NATIVE_ARCH_ACTUAL)",
 					"$(SRCROOT)/../../zig-out/lib",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lvoxel_editor_ios",
+					"-lsokol_clib_ios",
+					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.cabernal.voxeleditorhost;
 				PRODUCT_NAME = VoxelEditorHost;

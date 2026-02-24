@@ -45,8 +45,18 @@ pub fn build(b: *std.Build) void {
     const ios_sdk_opt = b.option(
         []const u8,
         "ios_sdk",
-        "Path to iPhoneOS SDK root (required for `zig build ios`)",
+        "Path to iPhoneOS or iPhoneSimulator SDK root (required for `zig build ios`)",
     );
+    const ios_simulator_opt = b.option(
+        bool,
+        "ios_simulator",
+        "Build for iOS simulator ABI when true",
+    ) orelse false;
+    const ios_arch_opt = b.option(
+        []const u8,
+        "ios_arch",
+        "iOS architecture (aarch64 or x86_64)",
+    ) orelse "aarch64";
 
     const native_sokol_mod = b.createModule(.{
         .root_source_file = b.path("third_party/sokol/sokol.zig"),
@@ -169,13 +179,17 @@ pub fn build(b: *std.Build) void {
         android_step.dependOn(&b.addFail("`zig build android` requires `-Dandroid_ndk=/path/to/android-ndk`").step);
     }
 
-    const ios_step = b.step("ios", "Build iOS arm64 static library in zig-out/lib");
+    const ios_step = b.step("ios", "Build iOS static library in zig-out/lib");
     if (ios_sdk_opt) |ios_sdk| {
-        const ios_target = b.resolveTargetQuery(.{
-            .cpu_arch = .aarch64,
+        var ios_query: std.Target.Query = .{
+            .cpu_arch = parseIosArch(ios_arch_opt),
             .os_tag = .ios,
-            .os_version_min = .{ .semver = .{ .major = 26, .minor = 0, .patch = 0 } },
-        });
+            .os_version_min = .{ .semver = .{ .major = 17, .minor = 0, .patch = 0 } },
+        };
+        if (ios_simulator_opt) {
+            ios_query.abi = .simulator;
+        }
+        const ios_target = b.resolveTargetQuery(ios_query);
         const ios_sokol_mod = b.createModule(.{
             .root_source_file = b.path("third_party/sokol/sokol.zig"),
             .target = ios_target,
@@ -207,9 +221,11 @@ pub fn build(b: *std.Build) void {
             .linkage = .static,
         });
         const install_ios = b.addInstallArtifact(ios_lib, .{});
+        const install_ios_sokol = b.addInstallArtifact(ios_sokol_clib, .{});
         ios_step.dependOn(&install_ios.step);
+        ios_step.dependOn(&install_ios_sokol.step);
     } else {
-        ios_step.dependOn(&b.addFail("`zig build ios` requires `-Dios_sdk=/path/to/iPhoneOS.sdk`").step);
+        ios_step.dependOn(&b.addFail("`zig build ios` requires `-Dios_sdk=/path/to/iOS.sdk`").step);
     }
 }
 
@@ -302,6 +318,7 @@ fn buildLibSokol(
     var cflags = std.ArrayListUnmanaged([]const u8).initBuffer(&cflags_buf);
     cflags.appendAssumeCapacity("-DIMPL");
     cflags.appendAssumeCapacity(backendDefine(backend));
+    cflags.appendAssumeCapacity("-fno-sanitize=undefined");
 
     if (optimize != .Debug) {
         cflags.appendAssumeCapacity("-DNDEBUG");
@@ -310,7 +327,6 @@ fn buildLibSokol(
         cflags.appendAssumeCapacity("-ObjC");
     }
     if (target.result.os.tag == .emscripten) {
-        cflags.appendAssumeCapacity("-fno-sanitize=undefined");
         if (emsdk_root) |root| {
             mod.addSystemIncludePath(.{
                 .cwd_relative = b.pathJoin(&.{ root, "upstream", "emscripten", "cache", "sysroot", "include" }),
@@ -327,6 +343,7 @@ fn buildLibSokol(
     if (target.result.os.tag == .ios) {
         if (ios_sdk_root) |root| {
             applyIosSdkPaths(b, mod, root);
+            cflags.appendAssumeCapacity("-DSOKOL_NO_ENTRY");
             cflags.appendAssumeCapacity("-isysroot");
             cflags.appendAssumeCapacity(root);
         }
@@ -351,6 +368,16 @@ fn resolveBackend(target: std.Target) Backend {
     if (target.os.tag == .windows) return .d3d11;
     if (target.abi.isAndroid() or target.os.tag == .emscripten) return .gles3;
     return .gl;
+}
+
+fn parseIosArch(arch: []const u8) std.Target.Cpu.Arch {
+    if (std.mem.eql(u8, arch, "aarch64") or std.mem.eql(u8, arch, "arm64")) {
+        return .aarch64;
+    }
+    if (std.mem.eql(u8, arch, "x86_64")) {
+        return .x86_64;
+    }
+    @panic("Unsupported -Dios_arch value. Use aarch64 or x86_64.");
 }
 
 fn backendDefine(backend: Backend) []const u8 {

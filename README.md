@@ -35,7 +35,7 @@ zig build android -Dandroid_ndk=/absolute/path/to/android-ndk
 
 Output: shared library in `zig-out/lib/` for packaging in an Android project.
 
-### iOS (arm64 static library)
+### iOS (static library)
 
 ```bash
 zig build ios -Dios_sdk=/absolute/path/to/iPhoneOS.sdk
@@ -43,19 +43,27 @@ zig build ios -Dios_sdk=/absolute/path/to/iPhoneOS.sdk
 
 Output: static library in `zig-out/lib/` for linking into an iOS app target.
 
+For simulator builds:
+
+```bash
+zig build ios -Dios_sdk=/absolute/path/to/iPhoneSimulator.sdk -Dios_simulator=true -Dios_arch=aarch64
+```
+
 ### Xcode iOS host app
 
 An Xcode host project is included at:
 
 `ios/VoxelEditorHost/VoxelEditorHost.xcodeproj`
 
-It contains a pre-build script that runs:
+It contains a pre-build script that runs Zig for either `iphoneos` or
+`iphonesimulator` (matching the active Xcode destination), then launches
+the real sokol/Zig runtime from `Sources/main.m` via:
 
 ```bash
-zig build ios -Dios_sdk="$(xcrun --sdk iphoneos --show-sdk-path)"
+voxel_editor_ios_run()
 ```
 
-so the app links `zig-out/lib/libvoxel_editor_ios.a` automatically during Xcode builds.
+The app links `zig-out/lib/libvoxel_editor_ios.a` automatically during Xcode builds.
 
 ## Controls
 
@@ -79,5 +87,5 @@ Keyboard shortcuts (desktop):
 ## Notes
 
 - `zig build android` requires Android NDK to resolve `EGL/GLES/aaudio` libs.
-- `zig build ios` requires an iPhoneOS SDK path to resolve Apple frameworks.
+- `zig build ios` requires an iOS SDK path (`iphoneos` or `iphonesimulator`) to resolve Apple frameworks.
 - Scene input is unified through `sokol_app` mouse/touch events so rotate/erase works across desktop, mobile, and web.

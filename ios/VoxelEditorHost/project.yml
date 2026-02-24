@@ -5,7 +5,6 @@ options:
     iOS: "17.0"
 settings:
   base:
-    SWIFT_VERSION: "5.0"
     GENERATE_INFOPLIST_FILE: YES
 targets:
   VoxelEditorHost:
@@ -13,23 +12,48 @@ targets:
     platform: iOS
     sources:
       - path: Sources
+        includes:
+          - main.m
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.cabernal.voxeleditorhost
         PRODUCT_NAME: VoxelEditorHost
         TARGETED_DEVICE_FAMILY: "1,2"
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        CLANG_ENABLE_MODULES: NO
+        CLANG_MODULES_AUTOLINK: NO
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: NO
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         LIBRARY_SEARCH_PATHS:
           - "$(inherited)"
+          - "$(DERIVED_FILE_DIR)/zig-libs/$(PLATFORM_NAME)-$(NATIVE_ARCH_ACTUAL)"
           - "$(SRCROOT)/../../zig-out/lib"
         OTHER_LDFLAGS:
           - "$(inherited)"
           - "-lvoxel_editor_ios"
+          - "-lsokol_clib_ios"
+          - "-lc++"
+    dependencies:
+      - sdk: Foundation.framework
+      - sdk: UIKit.framework
+      - sdk: Metal.framework
+      - sdk: MetalKit.framework
+      - sdk: QuartzCore.framework
+      - sdk: AudioToolbox.framework
+      - sdk: AVFoundation.framework
     preBuildScripts:
       - name: Build Zig iOS Library
-        basedOnDependencyAnalysis: false
+        basedOnDependencyAnalysis: true
+        inputFiles:
+          - "$(SRCROOT)/../../build.zig"
+          - "$(SRCROOT)/../../build.zig.zon"
+          - "$(SRCROOT)/../../src"
+          - "$(SRCROOT)/../../third_party/sokol"
+          - "$(SRCROOT)/../../third_party/cimgui"
+          - "$(SRCROOT)/../../third_party/ios_shims"
+        outputFiles:
+          - "$(DERIVED_FILE_DIR)/zig-libs/$(PLATFORM_NAME)-$(NATIVE_ARCH_ACTUAL)/libvoxel_editor_ios.a"
+          - "$(DERIVED_FILE_DIR)/zig-libs/$(PLATFORM_NAME)-$(NATIVE_ARCH_ACTUAL)/libsokol_clib_ios.a"
         script: |
           set -euo pipefail
           cd "$SRCROOT/../.."
@@ -43,8 +67,26 @@ targets:
             echo "error: zig not found. Install Zig or add it to PATH for Xcode build scripts."
             exit 1
           fi
-          IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
-          "$ZIG_BIN" build ios -Dios_sdk="$IOS_SDK"
+          case "${NATIVE_ARCH_ACTUAL:-arm64}" in
+            arm64) IOS_ARCH=aarch64 ;;
+            x86_64) IOS_ARCH=x86_64 ;;
+            *)
+              echo "error: unsupported iOS arch '${NATIVE_ARCH_ACTUAL:-unknown}'"
+              exit 1
+              ;;
+          esac
+          if [ "${PLATFORM_NAME:-iphoneos}" = "iphonesimulator" ]; then
+            IOS_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+            IOS_SIM=true
+          else
+            IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+            IOS_SIM=false
+          fi
+          "$ZIG_BIN" build ios -Dios_sdk="$IOS_SDK" -Dios_simulator="$IOS_SIM" -Dios_arch="$IOS_ARCH"
+          OUT_DIR="$DERIVED_FILE_DIR/zig-libs/$PLATFORM_NAME-$NATIVE_ARCH_ACTUAL"
+          mkdir -p "$OUT_DIR"
+          cp -f "zig-out/lib/libvoxel_editor_ios.a" "$OUT_DIR/libvoxel_editor_ios.a"
+          cp -f "zig-out/lib/libsokol_clib_ios.a" "$OUT_DIR/libsokol_clib_ios.a"
 schemes:
   VoxelEditorHost:
     build:

@@ -911,8 +911,8 @@ export fn input(ev: [*c]const sapp.Event) void {
     app.handleEvent(ev.*);
 }
 
-pub fn main() void {
-    sapp.run(.{
+fn appDesc() sapp.Desc {
+    return .{
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
@@ -925,5 +925,13 @@ pub fn main() void {
         .high_dpi = !is_web,
         .enable_clipboard = true,
         .clipboard_size = 1024,
-    });
+    };
+}
+
+export fn voxel_editor_ios_run() callconv(.c) void {
+    sapp.run(appDesc());
+}
+
+pub fn main() void {
+    sapp.run(appDesc());
 }

@@ -1,2 +1,6 @@
 .zig-cache/
 zig-out/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+ios/VoxelEditorHost/VoxelEditorHost.xcodeproj/project.xcworkspace/xcuserdata/
