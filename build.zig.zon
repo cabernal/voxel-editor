@@ -1,0 +1,15 @@
+.{
+    .name = .voxel_editor,
+    .version = "0.1.0",
+    .fingerprint = 0xaf0efdb1e5642ed1,
+    .minimum_zig_version = "0.15.2",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+        "src",
+        "models",
+        "third_party",
+        "web",
+    },
+}

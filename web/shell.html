@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SlimSAM Sokol Editor</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --panel: rgba(12, 17, 24, 0.9);
+      --edge: rgba(132, 164, 203, 0.35);
+      --ink: #ecf2f8;
+      --muted: rgba(215, 228, 242, 0.7);
+      font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+      background:
+        radial-gradient(1200px 700px at 15% 8%, #1e3148 0%, rgba(30, 49, 72, 0.16) 48%, transparent 74%),
+        radial-gradient(900px 620px at 82% 0%, #2a263f 0%, rgba(42, 38, 63, 0.11) 45%, transparent 72%),
+        linear-gradient(150deg, #08111a 0%, #101b28 52%, #0b1520 100%);
+      color: var(--ink);
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+    body {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--edge);
+      background: var(--panel);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+      font-size: 14px;
+    }
+    .muted {
+      color: var(--muted);
+    }
+    #canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid var(--edge);
+      background: #0b1118;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.4);
+      touch-action: none;
+    }
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(800px 500px at 18% 12%, rgba(43, 70, 104, 0.35) 0%, transparent 65%),
+        radial-gradient(700px 500px at 84% 12%, rgba(64, 44, 94, 0.3) 0%, transparent 68%),
+        linear-gradient(160deg, rgba(7, 12, 20, 0.95), rgba(10, 16, 24, 0.97));
+      opacity: 1;
+      transition: opacity 240ms ease;
+    }
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #loading-card {
+      width: min(460px, 92vw);
+      border: 1px solid rgba(137, 170, 210, 0.35);
+      border-radius: 12px;
+      padding: 16px;
+      background: rgba(9, 14, 22, 0.86);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42);
+      display: grid;
+      gap: 12px;
+    }
+    #loading-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    #loading-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    #loading-bar {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(124, 158, 199, 0.2);
+      border: 1px solid rgba(124, 158, 199, 0.28);
+    }
+    #loading-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #5db6ff, #7fd3a7);
+      transition: width 140ms ease;
+    }
+    #loading-status {
+      font-size: 12px;
+      color: rgba(227, 238, 248, 0.92);
+      min-height: 1.2em;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-screen">
+    <div id="loading-card">
+      <div id="loading-title">Loading SlimSAM Sokol Editor</div>
+      <div id="loading-subtitle">Booting WebAssembly runtime and initializing graphics</div>
+      <div id="loading-bar"><div id="loading-fill"></div></div>
+      <div id="loading-status">Preparing...</div>
+    </div>
+  </div>
+  <header>
+    <div><strong>SlimSAM Sokol Editor</strong></div>
+    <div class="muted">ImGui host in WASM. Image preview + prompt overlay panel is JS-side.</div>
+  </header>
+  <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <script>
+    (function() {
+      var loadingScreen = document.getElementById("loading-screen");
+      var loadingFill = document.getElementById("loading-fill");
+      var loadingStatus = document.getElementById("loading-status");
+      var totalDeps = 0;
+
+      function setProgress(frac) {
+        var clamped = Math.max(0, Math.min(1, frac));
+        loadingFill.style.width = (clamped * 100).toFixed(1) + "%";
+      }
+
+      function setStatus(text) {
+        loadingStatus.textContent = text || "";
+      }
+
+      function hideLoading() {
+        setProgress(1);
+        setStatus("Ready");
+        loadingScreen.classList.add("hidden");
+        setTimeout(function() {
+          if (loadingScreen && loadingScreen.parentNode) {
+            loadingScreen.parentNode.removeChild(loadingScreen);
+          }
+        }, 320);
+      }
+
+      var Module = window.Module || {};
+      Module.canvas = document.getElementById("canvas");
+      Module.setStatus = function(text) {
+        if (!text) return;
+        setStatus(text);
+      };
+      Module.monitorRunDependencies = function(left) {
+        totalDeps = Math.max(totalDeps, left);
+        if (totalDeps > 0) {
+          setProgress((totalDeps - left) / totalDeps);
+          setStatus(left ? ("Downloading assets (" + (totalDeps - left) + "/" + totalDeps + ")") : "Finalizing startup...");
+        }
+      };
+      Module.onRuntimeInitialized = function() {
+        hideLoading();
+      };
+      window.Module = Module;
+    })();
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>
