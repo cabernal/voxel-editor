@@ -23,6 +23,7 @@ const FovY: f32 = std.math.pi / 3.1;
 const NearPlane: f32 = 0.05;
 const FarPlane: f32 = 80.0;
 const DragThreshold: f32 = 5.0;
+const PinchZoomSensitivity: f32 = 0.012;
 const EraseBeepFreqHz: f32 = 920.0;
 const EraseBeepDurationSec: f32 = 0.08;
 const EraseBeepGain: f32 = 0.12;
@@ -74,6 +75,10 @@ const AppState = struct {
     pointer_start_y: f32 = 0.0,
     pointer_last_x: f32 = 0.0,
     pointer_last_y: f32 = 0.0,
+    pinch_active: bool = false,
+    pinch_id0: usize = 0,
+    pinch_id1: usize = 0,
+    pinch_last_distance: f32 = 0.0,
 
     status: [256]u8 = [_]u8{0} ** 256,
 
@@ -282,6 +287,7 @@ const AppState = struct {
         uiText("Controls", .{});
         uiText("- Drag (mouse/finger): rotate sphere", .{});
         uiText("- Click/tap: erase one voxel", .{});
+        uiText("- Two-finger pinch: zoom", .{});
         uiText("- Mouse wheel: zoom", .{});
         uiText("- Audio: plays only on voxel erase", .{});
         uiText("Voxels remaining: {d}/{d}", .{ self.voxel_count, self.initial_voxel_count });
@@ -559,7 +565,7 @@ const AppState = struct {
     }
 
     fn pointerDown(self: *AppState, kind: PointerKind, id: usize, x: f32, y: f32, consumed: bool) void {
-        if (consumed or self.pointer_active) return;
+        if (consumed or self.pointer_active or self.pinch_active) return;
 
         self.pointer_active = true;
         self.pointer_dragging = false;
@@ -621,9 +627,15 @@ const AppState = struct {
     }
 
     fn handleTouchBegan(self: *AppState, ev: sapp.Event, consumed: bool) void {
-        if (consumed or self.pointer_active) return;
+        if (consumed) return;
 
         const n: usize = @intCast(@max(ev.num_touches, 0));
+        if (n >= 2) {
+            self.beginPinch(ev);
+            return;
+        }
+        if (self.pointer_active) return;
+
         for (ev.touches[0..n]) |t| {
             if (!t.changed) continue;
             self.pointerDown(.touch, t.identifier, t.pos_x, t.pos_y, false);
@@ -632,6 +644,31 @@ const AppState = struct {
     }
 
     fn handleTouchMoved(self: *AppState, ev: sapp.Event) void {
+        if (self.pinch_active) {
+            var x0: f32 = 0.0;
+            var y0: f32 = 0.0;
+            var x1: f32 = 0.0;
+            var y1: f32 = 0.0;
+
+            if (findTouchById(ev, self.pinch_id0, &x0, &y0) and findTouchById(ev, self.pinch_id1, &x1, &y1)) {
+                const dist = touchDistance(x0, y0, x1, y1);
+                if (dist > 0.0 and self.pinch_last_distance > 0.0) {
+                    const delta = dist - self.pinch_last_distance;
+                    self.zoomBy(-delta * PinchZoomSensitivity);
+                }
+                self.pinch_last_distance = dist;
+                return;
+            }
+
+            const n: usize = @intCast(@max(ev.num_touches, 0));
+            if (n >= 2) {
+                self.beginPinch(ev);
+            } else {
+                self.endPinch();
+            }
+            return;
+        }
+
         if (!self.pointer_active or self.pointer_kind != .touch) return;
 
         const n: usize = @intCast(@max(ev.num_touches, 0));
@@ -644,6 +681,15 @@ const AppState = struct {
     }
 
     fn handleTouchEnded(self: *AppState, ev: sapp.Event, consumed: bool) void {
+        if (self.pinch_active) {
+            const n: usize = @intCast(@max(ev.num_touches, 0));
+            if (n >= 2 and self.continuePinchFromEnded(ev)) {
+                return;
+            }
+            self.endPinch();
+            return;
+        }
+
         if (!self.pointer_active or self.pointer_kind != .touch) return;
 
         const n: usize = @intCast(@max(ev.num_touches, 0));
@@ -653,6 +699,64 @@ const AppState = struct {
                 break;
             }
         }
+    }
+
+    fn beginPinch(self: *AppState, ev: sapp.Event) void {
+        const n: usize = @intCast(@max(ev.num_touches, 0));
+        if (n < 2) return;
+
+        const t0 = ev.touches[0];
+        const t1 = ev.touches[1];
+
+        self.pointer_active = false;
+        self.pointer_dragging = false;
+        self.pointer_kind = .none;
+
+        self.pinch_active = true;
+        self.pinch_id0 = t0.identifier;
+        self.pinch_id1 = t1.identifier;
+        self.pinch_last_distance = touchDistance(t0.pos_x, t0.pos_y, t1.pos_x, t1.pos_y);
+    }
+
+    fn continuePinchFromEnded(self: *AppState, ev: sapp.Event) bool {
+        const n: usize = @intCast(@max(ev.num_touches, 0));
+        if (n < 2) return false;
+
+        var found: usize = 0;
+        var id0: usize = 0;
+        var id1: usize = 0;
+        var x0: f32 = 0.0;
+        var y0: f32 = 0.0;
+        var x1: f32 = 0.0;
+        var y1: f32 = 0.0;
+
+        for (ev.touches[0..n]) |t| {
+            if (t.changed) continue;
+            if (found == 0) {
+                id0 = t.identifier;
+                x0 = t.pos_x;
+                y0 = t.pos_y;
+                found = 1;
+            } else {
+                id1 = t.identifier;
+                x1 = t.pos_x;
+                y1 = t.pos_y;
+                found = 2;
+                break;
+            }
+        }
+        if (found < 2) return false;
+
+        self.pinch_active = true;
+        self.pinch_id0 = id0;
+        self.pinch_id1 = id1;
+        self.pinch_last_distance = touchDistance(x0, y0, x1, y1);
+        return true;
+    }
+
+    fn endPinch(self: *AppState) void {
+        self.pinch_active = false;
+        self.pinch_last_distance = 0.0;
     }
 
     fn eraseVoxelAtScreen(self: *AppState, sx: f32, sy: f32) bool {
@@ -777,6 +881,23 @@ const AppState = struct {
 };
 
 var app: AppState = .{};
+
+fn findTouchById(ev: sapp.Event, id: usize, out_x: *f32, out_y: *f32) bool {
+    const n: usize = @intCast(@max(ev.num_touches, 0));
+    for (ev.touches[0..n]) |t| {
+        if (t.identifier != id) continue;
+        out_x.* = t.pos_x;
+        out_y.* = t.pos_y;
+        return true;
+    }
+    return false;
+}
+
+fn touchDistance(x0: f32, y0: f32, x1: f32, y1: f32) f32 {
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    return @sqrt(dx * dx + dy * dy);
+}
 
 fn rayIntersectsAabb(ray: Ray, bmin: Vec3, bmax: Vec3, t_hit: *f32) bool {
     var tmin: f32 = -std.math.inf(f32);
