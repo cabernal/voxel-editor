@@ -243,9 +243,18 @@ const AppState = struct {
     }
 
     fn drawUiToggle(self: *AppState) void {
-        const viewport_w = self.uiViewportWidth();
-        const margin: f32 = 8.0;
-        c.igSetNextWindowPos(v2(viewport_w - margin, margin), c.ImGuiCond_Always, v2(1.0, 0.0));
+        const viewport = self.uiViewportSize();
+        const is_ios = builtin.target.os.tag == .ios;
+        const margin_x: f32 = 10.0;
+        const margin_y: f32 = if (is_ios) 52.0 else 10.0;
+        c.igSetNextWindowPos(
+            v2(
+                std.math.clamp(margin_x, 0.0, @max(0.0, viewport.w - 1.0)),
+                std.math.clamp(margin_y, 0.0, @max(0.0, viewport.h - 1.0)),
+            ),
+            c.ImGuiCond_Always,
+            v2(0.0, 0.0),
+        );
 
         const flags: c.ImGuiWindowFlags = c.ImGuiWindowFlags_NoDecoration |
             c.ImGuiWindowFlags_AlwaysAutoResize |
@@ -255,36 +264,50 @@ const AppState = struct {
         _ = c.igBegin("##ui_toggle", null, flags);
         defer c.igEnd();
 
+        const button_w: f32 = if (is_ios) 96.0 else 0.0;
+        const button_h: f32 = if (is_ios) 34.0 else 0.0;
         if (self.ui_visible) {
-            if (c.igButton("Hide UI [H]", v2(0.0, 0.0))) self.toggleUiVisible();
+            if (c.igButton("Hide UI", v2(button_w, button_h))) self.toggleUiVisible();
         } else {
-            if (c.igButton("Show UI [H]", v2(0.0, 0.0))) self.toggleUiVisible();
+            if (c.igButton("Show UI", v2(button_w, button_h))) self.toggleUiVisible();
         }
     }
 
     fn drawUi(self: *AppState) void {
-        const viewport_w = self.uiViewportWidth();
-        const viewport_h = self.uiViewportHeight();
-        const is_compact = viewport_w <= 900.0 or viewport_h <= 640.0;
+        const viewport = self.uiViewportSize();
+        const viewport_w = viewport.w;
+        const viewport_h = viewport.h;
+        const is_ios = builtin.target.os.tag == .ios;
+        const is_compact = is_ios or viewport_w <= 900.0 or viewport_h <= 640.0;
         const is_portrait = viewport_h > viewport_w;
-        const margin: f32 = if (is_compact) 8.0 else 14.0;
+        const edge_margin: f32 = if (is_compact) 8.0 else 14.0;
+        const top_margin: f32 = if (is_compact and is_ios) 96.0 else edge_margin;
         const reset_layout = self.ui_needs_layout_reset or self.ui_last_compact != is_compact;
         self.ui_last_compact = is_compact;
         self.ui_needs_layout_reset = false;
 
         if (is_compact) {
             const max_w: f32 = if (is_portrait)
-                viewport_w - margin * 2.0
+                viewport_w - edge_margin * 2.0
             else
                 @min(420.0, viewport_w * 0.48);
-            const panel_w = std.math.clamp(max_w, 250.0, viewport_w - margin * 2.0);
-            const desired_h: f32 = if (is_portrait) viewport_h * 0.56 else viewport_h - margin * 2.0;
-            const max_h = viewport_h - margin * 2.0;
-            const panel_h = std.math.clamp(desired_h, @min(230.0, max_h), max_h);
+            const panel_w_max = @max(120.0, viewport_w - edge_margin * 2.0);
+            const panel_w_min = @min(250.0, panel_w_max);
+            const panel_w = std.math.clamp(max_w, panel_w_min, panel_w_max);
+            const desired_h: f32 = if (is_portrait) viewport_h * 0.56 else viewport_h - top_margin - edge_margin;
+            const panel_h_max = @max(160.0, viewport_h - top_margin - edge_margin);
+            const panel_h_min = @min(230.0, panel_h_max);
+            const panel_h = std.math.clamp(desired_h, panel_h_min, panel_h_max);
 
+            c.igSetNextWindowSizeConstraints(
+                v2(140.0, 160.0),
+                v2(@max(140.0, viewport_w - edge_margin * 2.0), @max(160.0, viewport_h - top_margin - edge_margin)),
+                null,
+                null,
+            );
             c.igSetNextWindowSize(v2(panel_w, panel_h), c.ImGuiCond_Always);
             if (reset_layout) {
-                c.igSetNextWindowPos(v2(margin, margin), c.ImGuiCond_Always, v2(0.0, 0.0));
+                c.igSetNextWindowPos(v2(edge_margin, top_margin), c.ImGuiCond_Always, v2(0.0, 0.0));
             }
         } else {
             if (reset_layout) {
@@ -357,16 +380,22 @@ const AppState = struct {
         c.igTextUnformatted(self.status[0..].ptr, null);
     }
 
-    fn uiViewportWidth(self: *AppState) f32 {
+    fn uiViewportSize(self: *AppState) struct { w: f32, h: f32 } {
         _ = self;
-        const dpi = @max(1.0, sapp.dpiScale());
-        return @max(1.0, sapp.widthf() / dpi);
-    }
-
-    fn uiViewportHeight(self: *AppState) f32 {
-        _ = self;
-        const dpi = @max(1.0, sapp.dpiScale());
-        return @max(1.0, sapp.heightf() / dpi);
+        const raw_w = @max(1.0, sapp.widthf());
+        const raw_h = @max(1.0, sapp.heightf());
+        const use_dip = builtin.target.os.tag == .ios;
+        if (use_dip) {
+            const dpi = @max(1.0, sapp.dpiScale());
+            return .{
+                .w = @max(1.0, raw_w / dpi),
+                .h = @max(1.0, raw_h / dpi),
+            };
+        }
+        return .{
+            .w = raw_w,
+            .h = raw_h,
+        };
     }
 
     fn drawScene(self: *AppState) void {
@@ -683,13 +712,12 @@ const AppState = struct {
     }
 
     fn handleTouchBegan(self: *AppState, ev: sapp.Event, consumed: bool) void {
-        if (consumed) return;
-
         const n: usize = @intCast(@max(ev.num_touches, 0));
         if (n >= 2) {
             self.beginPinch(ev);
             return;
         }
+        if (consumed) return;
         if (self.pointer_active) return;
 
         for (ev.touches[0..n]) |t| {
