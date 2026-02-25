@@ -243,7 +243,7 @@ const AppState = struct {
     }
 
     fn drawUiToggle(self: *AppState) void {
-        const viewport_w = @max(1.0, sapp.widthf());
+        const viewport_w = self.uiViewportWidth();
         const margin: f32 = 8.0;
         c.igSetNextWindowPos(v2(viewport_w - margin, margin), c.ImGuiCond_Always, v2(1.0, 0.0));
 
@@ -263,8 +263,8 @@ const AppState = struct {
     }
 
     fn drawUi(self: *AppState) void {
-        const viewport_w = @max(1.0, sapp.widthf());
-        const viewport_h = @max(1.0, sapp.heightf());
+        const viewport_w = self.uiViewportWidth();
+        const viewport_h = self.uiViewportHeight();
         const is_compact = viewport_w <= 900.0 or viewport_h <= 640.0;
         const is_portrait = viewport_h > viewport_w;
         const margin: f32 = if (is_compact) 8.0 else 14.0;
@@ -355,6 +355,18 @@ const AppState = struct {
         c.igSeparator();
         uiText("Status", .{});
         c.igTextUnformatted(self.status[0..].ptr, null);
+    }
+
+    fn uiViewportWidth(self: *AppState) f32 {
+        _ = self;
+        const dpi = @max(1.0, sapp.dpiScale());
+        return @max(1.0, sapp.widthf() / dpi);
+    }
+
+    fn uiViewportHeight(self: *AppState) f32 {
+        _ = self;
+        const dpi = @max(1.0, sapp.dpiScale());
+        return @max(1.0, sapp.heightf() / dpi);
     }
 
     fn drawScene(self: *AppState) void {
