@@ -89,6 +89,9 @@ const AppState = struct {
     audio_beep_frames_left: i32 = 0,
     audio_beep_total_frames: i32 = 0,
     audio_ready: bool = false,
+    ui_visible: bool = true,
+    ui_needs_layout_reset: bool = true,
+    ui_last_compact: bool = false,
 
     initialized: bool = false,
 
@@ -175,7 +178,10 @@ const AppState = struct {
             .dpi_scale = sapp.dpiScale(),
         });
 
-        self.drawUi();
+        if (self.ui_visible) {
+            self.drawUi();
+        }
+        self.drawUiToggle();
 
         sg.beginPass(.{
             .action = self.pass_action,
@@ -220,11 +226,39 @@ const AppState = struct {
                         .L => _ = self.addLight(),
                         .BACKSPACE => self.removeLight(),
                         .R => self.resetCamera(),
+                        .H => self.toggleUiVisible(),
                         else => {},
                     }
                 }
             },
             else => {},
+        }
+    }
+
+    fn toggleUiVisible(self: *AppState) void {
+        self.ui_visible = !self.ui_visible;
+        if (self.ui_visible) {
+            self.ui_needs_layout_reset = true;
+        }
+    }
+
+    fn drawUiToggle(self: *AppState) void {
+        const viewport_w = @max(1.0, sapp.widthf());
+        const margin: f32 = 8.0;
+        c.igSetNextWindowPos(v2(viewport_w - margin, margin), c.ImGuiCond_Always, v2(1.0, 0.0));
+
+        const flags: c.ImGuiWindowFlags = c.ImGuiWindowFlags_NoDecoration |
+            c.ImGuiWindowFlags_AlwaysAutoResize |
+            c.ImGuiWindowFlags_NoSavedSettings |
+            c.ImGuiWindowFlags_NoMove |
+            c.ImGuiWindowFlags_NoNavFocus;
+        _ = c.igBegin("##ui_toggle", null, flags);
+        defer c.igEnd();
+
+        if (self.ui_visible) {
+            if (c.igButton("Hide UI [H]", v2(0.0, 0.0))) self.toggleUiVisible();
+        } else {
+            if (c.igButton("Show UI [H]", v2(0.0, 0.0))) self.toggleUiVisible();
         }
     }
 
@@ -234,6 +268,9 @@ const AppState = struct {
         const is_compact = viewport_w <= 900.0 or viewport_h <= 640.0;
         const is_portrait = viewport_h > viewport_w;
         const margin: f32 = if (is_compact) 8.0 else 14.0;
+        const reset_layout = self.ui_needs_layout_reset or self.ui_last_compact != is_compact;
+        self.ui_last_compact = is_compact;
+        self.ui_needs_layout_reset = false;
 
         if (is_compact) {
             const max_w: f32 = if (is_portrait)
@@ -245,15 +282,22 @@ const AppState = struct {
             const max_h = viewport_h - margin * 2.0;
             const panel_h = std.math.clamp(desired_h, @min(230.0, max_h), max_h);
 
-            c.igSetNextWindowPos(v2(margin, margin), c.ImGuiCond_Always, v2(0.0, 0.0));
             c.igSetNextWindowSize(v2(panel_w, panel_h), c.ImGuiCond_Always);
+            if (reset_layout) {
+                c.igSetNextWindowPos(v2(margin, margin), c.ImGuiCond_Always, v2(0.0, 0.0));
+            }
         } else {
-            c.igSetNextWindowPos(v2(14.0, 14.0), c.ImGuiCond_FirstUseEver, v2(0.0, 0.0));
-            c.igSetNextWindowSize(v2(390.0, 680.0), c.ImGuiCond_FirstUseEver);
+            if (reset_layout) {
+                c.igSetNextWindowPos(v2(14.0, 14.0), c.ImGuiCond_Always, v2(0.0, 0.0));
+                c.igSetNextWindowSize(v2(390.0, 680.0), c.ImGuiCond_Always);
+            } else {
+                c.igSetNextWindowPos(v2(14.0, 14.0), c.ImGuiCond_FirstUseEver, v2(0.0, 0.0));
+                c.igSetNextWindowSize(v2(390.0, 680.0), c.ImGuiCond_FirstUseEver);
+            }
         }
 
         const compact_flags: c.ImGuiWindowFlags = if (is_compact)
-            c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize
+            c.ImGuiWindowFlags_NoResize
         else
             0;
         const window_flags: c.ImGuiWindowFlags = c.ImGuiWindowFlags_NoCollapse | compact_flags;
