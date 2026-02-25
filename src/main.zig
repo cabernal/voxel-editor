@@ -224,10 +224,36 @@ const AppState = struct {
     }
 
     fn drawUi(self: *AppState) void {
-        c.igSetNextWindowPos(v2(14.0, 14.0), c.ImGuiCond_FirstUseEver, v2(0.0, 0.0));
-        c.igSetNextWindowSize(v2(390.0, 680.0), c.ImGuiCond_FirstUseEver);
+        const viewport_w = @max(1.0, sapp.widthf());
+        const viewport_h = @max(1.0, sapp.heightf());
+        const is_compact = viewport_w <= 900.0 or viewport_h <= 640.0;
+        const is_portrait = viewport_h > viewport_w;
+        const margin: f32 = if (is_compact) 8.0 else 14.0;
 
-        _ = c.igBegin("Voxel Editor", null, c.ImGuiWindowFlags_NoCollapse);
+        if (is_compact) {
+            const max_w: f32 = if (is_portrait)
+                viewport_w - margin * 2.0
+            else
+                @min(420.0, viewport_w * 0.48);
+            const panel_w = std.math.clamp(max_w, 250.0, viewport_w - margin * 2.0);
+            const desired_h: f32 = if (is_portrait) viewport_h * 0.56 else viewport_h - margin * 2.0;
+            const max_h = viewport_h - margin * 2.0;
+            const panel_h = std.math.clamp(desired_h, @min(230.0, max_h), max_h);
+
+            c.igSetNextWindowPos(v2(margin, margin), c.ImGuiCond_Always, v2(0.0, 0.0));
+            c.igSetNextWindowSize(v2(panel_w, panel_h), c.ImGuiCond_Always);
+        } else {
+            c.igSetNextWindowPos(v2(14.0, 14.0), c.ImGuiCond_FirstUseEver, v2(0.0, 0.0));
+            c.igSetNextWindowSize(v2(390.0, 680.0), c.ImGuiCond_FirstUseEver);
+        }
+
+        const compact_flags: c.ImGuiWindowFlags = if (is_compact)
+            c.ImGuiWindowFlags_NoMove | c.ImGuiWindowFlags_NoResize
+        else
+            0;
+        const window_flags: c.ImGuiWindowFlags = c.ImGuiWindowFlags_NoCollapse | compact_flags;
+
+        _ = c.igBegin("Voxel Editor", null, window_flags);
         defer c.igEnd();
 
         uiText("Targets: desktop + android + ios + web", .{});
@@ -238,15 +264,19 @@ const AppState = struct {
         }
         c.igSeparator();
 
-        if (c.igButton("Reset Sphere [Space]", v2(180.0, 0.0))) self.resetVoxelSphere();
-        c.igSameLine(0.0, 8.0);
-        if (c.igButton("Reset Camera [R]", v2(170.0, 0.0))) self.resetCamera();
+        const content_w = @max(140.0, c.igGetContentRegionAvail().x);
+        const two_cols = content_w >= 320.0;
+        const row_btn_w: f32 = if (two_cols) (content_w - 8.0) * 0.5 else content_w;
 
-        if (c.igButton("Add Light [L]", v2(140.0, 0.0))) {
+        if (c.igButton("Reset Sphere [Space]", v2(row_btn_w, 0.0))) self.resetVoxelSphere();
+        if (two_cols) c.igSameLine(0.0, 8.0);
+        if (c.igButton("Reset Camera [R]", v2(row_btn_w, 0.0))) self.resetCamera();
+
+        if (c.igButton("Add Light [L]", v2(row_btn_w, 0.0))) {
             if (!self.addLight()) self.setStatus("Max lights reached.");
         }
-        c.igSameLine(0.0, 8.0);
-        if (c.igButton("Remove Light [Backspace]", v2(220.0, 0.0))) self.removeLight();
+        if (two_cols) c.igSameLine(0.0, 8.0);
+        if (c.igButton("Remove Light [Backspace]", v2(row_btn_w, 0.0))) self.removeLight();
 
         c.igSeparator();
         uiText("Controls", .{});
